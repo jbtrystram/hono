@@ -68,7 +68,7 @@ public class CredentialsAmqpIT {
 
     /**
      * Starts the device registry and connects a client.
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @BeforeClass
@@ -86,7 +86,7 @@ public class CredentialsAmqpIT {
 
     /**
      * Shuts down the device registry and closes the client.
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @AfterClass
@@ -98,7 +98,7 @@ public class CredentialsAmqpIT {
 
     /**
      * Verify that a not existing authId is responded with HTTP_NOT_FOUND.
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @Test
@@ -115,7 +115,7 @@ public class CredentialsAmqpIT {
 
     /**
      * Verifies that the service returns credentials for a given type and authentication ID.
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @Test
@@ -141,9 +141,9 @@ public class CredentialsAmqpIT {
                 .put("client-id", "gateway-one");
 
         credentialsClient
-                .get(CredentialsConstants.SECRETS_TYPE_HASHED_PASSWORD, "gw", clientContext)
+                .get(CredentialsConstants.SECRETS_TYPE_HASHED_PASSWORD, "gateway", clientContext)
                 .setHandler(ctx.asyncAssertSuccess(result -> {
-                    ctx.assertEquals("gw", result.getAuthId());
+                    ctx.assertEquals("gateway", result.getAuthId());
                     ctx.assertEquals(CredentialsConstants.SECRETS_TYPE_HASHED_PASSWORD, result.getType());
                 }));
     }
@@ -191,7 +191,7 @@ public class CredentialsAmqpIT {
     /**
      * Verify that setting authId and type to existing credentials is responded with HTTP_OK.
      * Check that the payload contains the default deviceId and is enabled.
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @Test
@@ -207,7 +207,7 @@ public class CredentialsAmqpIT {
     /**
      * Verify that setting authId and type to existing credentials is responded with HTTP_OK.
      * Check that the payload contains multiple secrets (more than one).
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @Test
@@ -223,7 +223,7 @@ public class CredentialsAmqpIT {
     /**
      * Verify that setting authId and type to existing credentials is responded with HTTP_OK.
      * Check that the payload contains the expected hash-function, salt and encrypted password.
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @Test
@@ -239,7 +239,7 @@ public class CredentialsAmqpIT {
     /**
      * Verify that setting authId and type to existing credentials is responded with HTTP_OK.
      * Check that the payload contains NOT_BEFORE and NOT_AFTER entries which denote a currently active time interval.
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @Test
@@ -255,7 +255,7 @@ public class CredentialsAmqpIT {
     /**
      * Verify that setting authId and type PreSharedKey to existing credentials is responded with HTTP_OK.
      * Check that the payload contains NOT_BEFORE and NOT_AFTER entries which denote a currently active time interval.
-     * 
+     *
      * @param ctx The vert.x test context.
      */
     @Test
