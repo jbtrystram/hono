@@ -38,12 +38,10 @@ import java.util.concurrent.TimeUnit;
 @RunWith(VertxUnitRunner.class)
 public class DeviceRegistrationMandatoryAmqpIT {
 
-    private static final String PROPERTY_VIA = "via";
     private static final Vertx vertx = Vertx.vertx();
 
     private static IntegrationTestSupport helper;
     private static HonoClient deviceRegistryclient;
-    //private static RegistrationClient registrationClient;
 
     /**
      * Global timeout for all test cases.
@@ -65,12 +63,6 @@ public class DeviceRegistrationMandatoryAmqpIT {
         deviceRegistryclient = DeviceRegistryAmqpTestSupport.prepareDeviceRegistryClient(vertx,
                 IntegrationTestSupport.HONO_USER, IntegrationTestSupport.HONO_PWD);
         deviceRegistryclient.connect(new ProtonClientOptions()).setHandler(ctx.asyncAssertSuccess());
-
-        /*deviceRegistryclient.connect(new ProtonClientOptions())
-                .compose(c -> c.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT))
-                .setHandler(ctx.asyncAssertSuccess(r -> {
-                    registrationClient = r;
-                })); */
     }
 
     /**
@@ -142,80 +134,6 @@ public class DeviceRegistrationMandatoryAmqpIT {
             .compose(ok -> deviceRegistryclient.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT))
             .compose(client -> client.assertRegistration(deviceId))
             .setHandler(ctx.asyncAssertFailure(t -> assertErrorCode(t, HttpURLConnection.HTTP_NOT_FOUND, ctx)));
-    }
-
-    /**
-     * Verifies that the registry fails a non-existing gateway's request to assert a
-     * device's registration status with a 403 error code.
-     * 
-     * @param ctx The vert.x test context.
-     */
-    @Test
-    public void testAssertRegistrationFailsForNonExistingGateway(final TestContext ctx) {
-
-        final String deviceId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        helper.registry.registerDevice(Constants.DEFAULT_TENANT, deviceId)
-            .compose(ok -> deviceRegistryclient.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT))
-            .compose(client -> client.assertRegistration(deviceId, "non-existing-gateway"))
-            .setHandler(ctx.asyncAssertFailure(t -> assertErrorCode(t, HttpURLConnection.HTTP_FORBIDDEN, ctx)));
-    }
-
-    /**
-     * Verifies that the registry succeeds a request to assert the
-     * registration status of a device that is connected via a gateway.
-     * 
-     * @param ctx The vert.x test context.
-     */
-    @Test
-    public void testAssertRegistrationSucceedsForGateway(final TestContext ctx) {
-
-        final String deviceId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        final String gatewayId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        helper.registry.registerDevice(Constants.DEFAULT_TENANT, gatewayId)
-            .compose(ok -> helper.registry.registerDevice(Constants.DEFAULT_TENANT, deviceId, new JsonObject()
-                    .put(PROPERTY_VIA, gatewayId)))
-            .compose(ok -> deviceRegistryclient.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT))
-            .compose(client -> client.assertRegistration(deviceId, gatewayId))
-            .setHandler(ctx.asyncAssertSuccess());
-    }
-
-    /**
-     * Verifies that the registry fails a disabled gateway's request to assert a
-     * device's registration status with a 403 error code.
-     * 
-     * @param ctx The vert.x test context.
-     */
-    @Test
-    public void testAssertRegistrationFailsForDisabledGateway(final TestContext ctx) {
-
-        final String deviceId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        final String gatewayId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        helper.registry.registerDevice(Constants.DEFAULT_TENANT, gatewayId, new JsonObject()
-                .put(RegistrationConstants.FIELD_ENABLED, false))
-            .compose(ok -> helper.registry.registerDevice(Constants.DEFAULT_TENANT, deviceId, new JsonObject()
-                    .put(PROPERTY_VIA, gatewayId)))
-            .compose(ok -> deviceRegistryclient.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT))
-            .compose(client -> client.assertRegistration(deviceId, gatewayId))
-            .setHandler(ctx.asyncAssertFailure(t -> assertErrorCode(t, HttpURLConnection.HTTP_FORBIDDEN, ctx)));
-    }
-
-    /**
-     * Verifies that the registry fails a gateway's request to assert a
-     * device's registration status for which it is not authorized with a 403 error code.
-     * 
-     * @param ctx The vert.x test context.
-     */
-    @Test
-    public void testAssertRegistrationFailsForUnauthorizedGateway(final TestContext ctx) {
-
-        final String deviceId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        final String gatewayId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        helper.registry.registerDevice(Constants.DEFAULT_TENANT, gatewayId)
-            .compose(ok -> helper.registry.registerDevice(Constants.DEFAULT_TENANT, deviceId, new JsonObject()
-                    .put(PROPERTY_VIA, "not-" + gatewayId)))
-            .compose(ok -> deviceRegistryclient.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT))
-            .compose(client -> client.assertRegistration(deviceId, gatewayId))
-            .setHandler(ctx.asyncAssertFailure(t -> assertErrorCode(t, HttpURLConnection.HTTP_FORBIDDEN, ctx)));
     }
 
     private static void assertErrorCode(final Throwable error, final int expectedErrorCode, final TestContext ctx) {
