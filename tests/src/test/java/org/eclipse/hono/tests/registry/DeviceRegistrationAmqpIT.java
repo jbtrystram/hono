@@ -91,57 +91,6 @@ public class DeviceRegistrationAmqpIT {
     }
 
     /**
-     * Verifies that the registry succeeds a request to assert a
-     * device's registration status.
-     * 
-     * @param ctx The vert.x test context.
-     */
-    @Test
-    public void testAssertRegistrationSucceedsForDevice(final TestContext ctx) {
-
-        final String deviceId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        helper.registry.registerDevice(Constants.DEFAULT_TENANT, deviceId)
-            .compose(ok -> deviceRegistryclient.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT))
-            .compose(client -> client.assertRegistration(deviceId))
-            .setHandler(ctx.asyncAssertSuccess(resp -> {
-                ctx.assertEquals(deviceId, resp.getString(RegistrationConstants.FIELD_PAYLOAD_DEVICE_ID));
-                ctx.assertNotNull(resp.getString(RegistrationConstants.FIELD_ASSERTION));
-            }));
-    }
-
-    /**
-     * Verifies that the registry fails to assert a non-existing device's
-     * registration status with a 404 error code.
-     * 
-     * @param ctx The vert.x test context.
-     */
-    @Test
-    public void testAssertRegistrationFailsForUnknownDevice(final TestContext ctx) {
-        deviceRegistryclient.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT)
-            .compose(client -> client.assertRegistration("non-existing-device"))
-            .setHandler(ctx.asyncAssertFailure(t -> assertErrorCode(t, HttpURLConnection.HTTP_NOT_FOUND, ctx)));
-    }
-
-    /**
-     * Verifies that the registry fails to assert a disabled device's
-     * registration status with a 404 error code.
-     * 
-     * @param ctx The vert.x test context.
-     */
-    @Test
-    public void testAssertRegistrationFailsForDisabledDevice(final TestContext ctx) {
-
-        final String deviceId = helper.getRandomDeviceId(Constants.DEFAULT_TENANT);
-        helper.registry.registerDevice(
-                Constants.DEFAULT_TENANT,
-                deviceId,
-                new JsonObject().put(RegistrationConstants.FIELD_ENABLED, false))
-            .compose(ok -> deviceRegistryclient.getOrCreateRegistrationClient(Constants.DEFAULT_TENANT))
-            .compose(client -> client.assertRegistration(deviceId))
-            .setHandler(ctx.asyncAssertFailure(t -> assertErrorCode(t, HttpURLConnection.HTTP_NOT_FOUND, ctx)));
-    }
-
-    /**
      * Verifies that the registry fails a non-existing gateway's request to assert a
      * device's registration status with a 403 error code.
      * 
