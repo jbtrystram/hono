@@ -1,0 +1,19 @@
+[
+  {
+    "tenant": "DEFAULT_TENANT",
+    "devices": [
+      {
+        "device-id": "4711",
+      "data":{
+        "enabled": true
+        }
+      },
+      {
+        "device-id": "disabled-device",
+        "data" : {
+          "enabled": false
+          }
+      }
+    ]
+  }
+]
