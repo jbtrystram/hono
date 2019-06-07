@@ -35,6 +35,10 @@ public final class CredentialsConstants extends RequestResponseApiConstants {
      */
     public static final String FIELD_SECRETS                     = "secrets";
     /**
+     * The name of the field that contains the extension fields.
+     */
+    public static final String FIELD_EXT                         = "ext";
+    /**
      * The name of the field that contains the number of credentials contained in a message.
      */
     public static final String FIELD_CREDENTIALS_TOTAL           = "total";
@@ -70,7 +74,10 @@ public final class CredentialsConstants extends RequestResponseApiConstants {
      * for authentication.
      */
     public static final String FIELD_SECRETS_NOT_AFTER           = "not-after";
-
+    /**
+     * The name of the field that contains the comment about the secret.
+     */
+    public static final String FIELD_SECRETS_COMMENT           = "comment";
     /**
      * The Credential service's endpoint name.
      */
@@ -113,6 +120,10 @@ public final class CredentialsConstants extends RequestResponseApiConstants {
      * The vert.x event bus address to which inbound credentials messages are published.
      */
     public static final String EVENT_BUS_ADDRESS_CREDENTIALS_IN = "credentials.in";
+    /**
+     * The vert.x event bus address to which inbound credentials management messages are published.
+     */
+    public static final String EVENT_BUS_ADDRESS_CREDENTIALS_MANAGEMENT_IN = "credentials.mgmt.in";
 
     /**
      * Request actions that belong to the Credentials API.
@@ -133,6 +144,7 @@ public final class CredentialsConstants extends RequestResponseApiConstants {
         /**
          * The AMQP subject property value to use for invoking the <em>remove Credentials</em> operation.
          */
+        @Deprecated
         remove,
         /**
          * The name that all unknown operations are mapped to.

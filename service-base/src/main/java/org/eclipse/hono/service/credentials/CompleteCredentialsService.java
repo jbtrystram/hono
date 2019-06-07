@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 Contributors to the Eclipse Foundation
+ * Copyright (c) 2016, 2019 Contributors to the Eclipse Foundation
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information regarding copyright ownership.
@@ -26,6 +26,7 @@ import io.vertx.core.json.JsonObject;
  *
  * @see <a href="https://github.com/eclipse/hono/blob/1.0-M4/site/content/api/Credentials-API.md">Credentials API</a>
  */
+@Deprecated
 public interface CompleteCredentialsService extends CredentialsService {
 
     /**
