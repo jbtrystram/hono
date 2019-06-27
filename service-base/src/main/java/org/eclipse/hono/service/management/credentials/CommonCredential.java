@@ -14,7 +14,6 @@ package org.eclipse.hono.service.management.credentials;
 
 import static org.eclipse.hono.util.CredentialsConstants.FIELD_AUTH_ID;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,7 +27,7 @@ import java.util.Map;
  * Common Information.
  */
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type", visible = true)
 @JsonTypeIdResolver(CredentialTypeResolver.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class CommonCredential {
@@ -90,7 +89,6 @@ public abstract class CommonCredential {
      * @param value The value of the entry.
      * @return This instance, to allowed chained invocations.
      */
-    @JsonAnySetter
     public CommonCredential putExtension(final String key, final Object value) {
         if (this.extensions == null) {
             this.extensions = new HashMap<>();

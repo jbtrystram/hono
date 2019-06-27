@@ -28,6 +28,7 @@ public class GenericCredential extends CommonCredential {
 
     private String type;
 
+    @JsonAnySetter
     private Map<String, Object> additionalProperties = new HashMap<>();
 
     private List<GenericSecret> secrets = new LinkedList<>();
@@ -49,7 +50,6 @@ public class GenericCredential extends CommonCredential {
         this.secrets = secrets;
     }
 
-    @JsonAnySetter
     public void setAdditionalProperties(final Map<String, Object> additionalProperties) {
         this.additionalProperties = additionalProperties;
     }

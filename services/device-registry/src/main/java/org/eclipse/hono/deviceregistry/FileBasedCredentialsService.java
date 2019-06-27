@@ -482,6 +482,8 @@ public final class FileBasedCredentialsService extends AbstractVerticle
             try {
                 checkCredential(credential);
             } catch (final IllegalStateException e) {
+                TracingHelper.logError(span, e);
+                log.debug("Failed to validate credentials", e);
                 return OperationResult.empty(HttpURLConnection.HTTP_BAD_REQUEST);
             }
 
@@ -503,6 +505,7 @@ public final class FileBasedCredentialsService extends AbstractVerticle
                 credentialsJson.put(CredentialsConstants.FIELD_PAYLOAD_DEVICE_ID, deviceId);
                 credentialsJson.put(CredentialsConstants.FIELD_TYPE, type);
                 credentialsJson.put(CredentialsConstants.FIELD_ENABLED, credential.getEnabled());
+                credentialsJson.put(CredentialsConstants.FIELD_EXT, credential.getExtensions());
                 json.add(credentialsJson);
             }
 
@@ -522,12 +525,6 @@ public final class FileBasedCredentialsService extends AbstractVerticle
                 credentialsJson.put(CredentialsConstants.FIELD_SECRETS, secretsJson);
             }
             secretsJson.addAll(credentialObject.getJsonArray(CredentialsConstants.FIELD_SECRETS));
-
-            for (final Entry<String, Object>entry : credential.getExtensions().entrySet()) {
-                credentialsJson.put(entry.getKey(), entry.getValue());
-            }
-            credentialsJson.remove(CredentialsConstants.FIELD_EXT);
-
             credentialsForTenant.put(authId, json);
         }
 

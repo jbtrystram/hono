@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import org.eclipse.hono.service.management.credentials.CommonCredential;
 import org.eclipse.hono.service.management.credentials.GenericCredential;
+import org.eclipse.hono.service.management.credentials.GenericSecret;
 import org.eclipse.hono.service.management.credentials.PasswordCredential;
 import org.eclipse.hono.service.management.credentials.PasswordSecret;
 import org.eclipse.hono.service.management.credentials.PskCredential;
@@ -190,15 +191,20 @@ public class CredentialsHttpIT {
     @Test
     public void testAddCredentialsSucceedsForAdditionalProperties(final TestContext context) {
 
-        final CommonCredential secret = IntegrationTestSupport.createPasswordCredential(authId, "thePassword");
-        secret.getExtensions().put("client-id", "MQTT-client-2384236854");
+        final PasswordCredential credential = IntegrationTestSupport.createPasswordCredential(authId, "thePassword");
+        credential.getExtensions().put("client-id", "MQTT-client-2384236854");
 
-        registry.addCredentials(TENANT, deviceId, Collections.singleton(secret))
+        registry.addCredentials(TENANT, deviceId, Collections.singleton(credential))
                 .compose(createAttempt -> registry.getCredentials(TENANT, deviceId))
                 .setHandler(context.asyncAssertSuccess(b -> {
+                    context.assertEquals(1, b.toJsonArray().size());
                     final JsonObject credentialObject = b.toJsonArray().getJsonObject(0);
-                    context.assertEquals("MQTT-client-2384236854", credentialObject.getJsonObject(CredentialsConstants.FIELD_EXT).getString("client-id"));
-                    context.assertNull(credentialObject.getJsonObject(CredentialsConstants.FIELD_EXT).getString("device-id"));
+                    final var ext = credentialObject.getJsonObject(CredentialsConstants.FIELD_EXT);
+                    context.assertNotNull(ext);
+                    context.assertEquals("MQTT-client-2384236854", ext.getString("client-id"));
+
+                    // the device-id must not be part of the "ext" section
+                    context.assertNull(ext.getString("device-id"));
                 }));
     }
 
@@ -484,16 +490,19 @@ public class CredentialsHttpIT {
      * @throws InterruptedException if registration of credentials is interrupted.
      */
     @Test
-    @Ignore("Requires support for arbitrary credential type")
     public void testGetCredentialsForDeviceRegardlessOfType(final TestContext context) throws InterruptedException {
 
         final String pskAuthId = getRandomAuthId(TEST_AUTH_ID);
         final List<CommonCredential> credentialsToAdd = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            final GenericCredential secret = new GenericCredential();
-            secret.setAuthId(pskAuthId);
-            secret.setType("type" + i);
-            credentialsToAdd.add(secret);
+            final GenericCredential credential = new GenericCredential();
+            credential.setAuthId(pskAuthId);
+            credential.setType("type" + i);
+
+            final GenericSecret secret = new GenericSecret();
+            secret.getAdditionalProperties().put("field" + i, "setec astronomy");
+
+            credentialsToAdd.add(credential);
         }
 
         registry.addCredentials(TENANT, deviceId, credentialsToAdd)

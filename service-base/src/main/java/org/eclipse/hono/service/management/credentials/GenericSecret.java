@@ -24,9 +24,9 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
  */
 public class GenericSecret extends CommonSecret {
 
+    @JsonAnySetter
     private Map<String, Object> additionalProperties = new HashMap<>();
 
-    @JsonAnySetter
     public void setAdditionalProperties(final Map<String, Object> additionalProperties) {
         this.additionalProperties = additionalProperties;
     }
