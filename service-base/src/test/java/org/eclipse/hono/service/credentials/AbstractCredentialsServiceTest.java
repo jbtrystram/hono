@@ -52,6 +52,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.UUID;
 
 /**
@@ -183,25 +184,33 @@ public abstract class AbstractCredentialsServiceTest {
      * 
      * @param authId The authentication to use.
      * @param password The password to use.
+     * @param maxBcryptIterations max bcrypt iterations to use.
      * @return The fully populated credential.
      */
-    public static PasswordCredential createPasswordCredential(final String authId, final String password) {
+    public static PasswordCredential createPasswordCredential(final String authId, final String password,
+            final OptionalInt maxBcryptIterations) {
         final PasswordCredential p = new PasswordCredential();
         p.setAuthId(authId);
 
-        p.setSecrets(Collections.singletonList(createPasswordSecret(password)));
+        p.setSecrets(Collections.singletonList(createPasswordSecret(password, maxBcryptIterations)));
 
         return p;
+    }
+
+    private static PasswordCredential createPasswordCredential(final String authId, final String password) {
+        return createPasswordCredential(authId, password, OptionalInt.empty());
     }
 
     /**
      * Create a new password secret.
      * 
      * @param password The password to use.
+     * @param maxBcryptIterations max bcrypt iterations to use.
      * @return The password secret instance.
      */
-    public static PasswordSecret createPasswordSecret(final String password) {
-        final SpringBasedHonoPasswordEncoder encoder = new SpringBasedHonoPasswordEncoder();
+    public static PasswordSecret createPasswordSecret(final String password, final OptionalInt maxBcryptIterations) {
+        final SpringBasedHonoPasswordEncoder encoder = new SpringBasedHonoPasswordEncoder(
+                maxBcryptIterations.orElse(SpringBasedHonoPasswordEncoder.DEFAULT_BCRYPT_STRENGTH));
         final EncodedPassword encodedPwd = EncodedPassword.fromHonoSecret(encoder.encode(password));
 
         final PasswordSecret s = new PasswordSecret();

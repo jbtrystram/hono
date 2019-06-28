@@ -14,6 +14,7 @@
 package org.eclipse.hono.tests.http;
 
 import static org.eclipse.hono.tests.http.HttpProtocolException.assertProtocolError;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -246,10 +248,17 @@ public abstract class HttpTestBase {
                 .add(HttpHeaders.AUTHORIZATION, authorization)
                 .add(HttpHeaders.ORIGIN, ORIGIN_URI);
 
+        final AtomicReference<Throwable> setupError = new AtomicReference<>();
         helper.registry
-            .addDeviceForTenant(tenantId, tenant, deviceId, PWD)
-            .setHandler(ctx.asyncAssertSuccess(ok -> setup.complete()));
+                .addDeviceForTenant(tenantId, tenant, deviceId, PWD)
+                .setHandler(r -> {
+                    setupError.set(r.cause());
+                    setup.complete();
+                    ctx.<MultiMap> asyncAssertSuccess().handle(r);
+                });
+
         setup.await();
+        assertNull(setupError.get());
 
         testUploadMessages(ctx, tenantId,
                 count -> {

@@ -25,7 +25,6 @@ import java.util.Objects;
 import javax.security.auth.x500.X500Principal;
 
 import org.eclipse.hono.client.ServiceInvocationException;
-import org.eclipse.hono.service.credentials.AbstractCredentialsServiceTest;
 import org.eclipse.hono.service.management.credentials.CommonCredential;
 import org.eclipse.hono.service.management.credentials.PasswordCredential;
 import org.eclipse.hono.service.management.credentials.PskCredential;
@@ -680,7 +679,7 @@ public final class DeviceRegistryHttpClient {
 
         Objects.requireNonNull(tenant);
 
-        final PasswordCredential secret = AbstractCredentialsServiceTest.createPasswordCredential(deviceId, password);
+        final PasswordCredential secret = IntegrationTestSupport.createPasswordCredential(deviceId, password);
 
         return addTenant(tenantId, JsonObject.mapFrom(tenant))
                 .compose(ok -> registerDevice(tenantId, deviceId, device))
@@ -730,7 +729,7 @@ public final class DeviceRegistryHttpClient {
         Objects.requireNonNull(data);
         Objects.requireNonNull(password);
 
-        final PasswordCredential secret = AbstractCredentialsServiceTest.createPasswordCredential(deviceId, password);
+        final PasswordCredential secret = IntegrationTestSupport.createPasswordCredential(deviceId, password);
 
         return registerDevice(tenantId, deviceId, data)
                 .compose(ok -> addCredentials(tenantId, deviceId, Collections.singletonList(secret)));

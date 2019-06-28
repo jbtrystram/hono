@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import org.eclipse.hono.service.credentials.AbstractCredentialsServiceTest;
 import org.eclipse.hono.service.management.credentials.CommonCredential;
 import org.eclipse.hono.service.management.credentials.GenericCredential;
 import org.eclipse.hono.service.management.credentials.PasswordCredential;
@@ -111,7 +110,7 @@ public class CredentialsHttpIT {
     public void setUp(final TestContext ctx) {
         deviceId = UUID.randomUUID().toString();
         authId = getRandomAuthId(TEST_AUTH_ID);
-        hashedPasswordCredential = AbstractCredentialsServiceTest.createPasswordCredential(authId, ORIG_BCRYPT_PWD);
+        hashedPasswordCredential = IntegrationTestSupport.createPasswordCredential(authId, ORIG_BCRYPT_PWD);
         pskCredentials = newPskCredentials(authId);
         final Async creation = ctx.async();
         registry
@@ -191,7 +190,7 @@ public class CredentialsHttpIT {
     @Test
     public void testAddCredentialsSucceedsForAdditionalProperties(final TestContext context) {
 
-        final CommonCredential secret = AbstractCredentialsServiceTest.createPasswordCredential(authId, "thePassword");
+        final CommonCredential secret = IntegrationTestSupport.createPasswordCredential(authId, "thePassword");
         secret.getExtensions().put("client-id", "MQTT-client-2384236854");
 
         registry.addCredentials(TENANT, deviceId, Collections.singleton(secret))
@@ -362,7 +361,7 @@ public class CredentialsHttpIT {
     @Ignore("Requires support for clear text passwords")
     public void testUpdateCredentialsSucceedsForClearTextPassword(final TestContext context) {
 
-        final PasswordCredential secret = AbstractCredentialsServiceTest.createPasswordCredential(authId, "newPassword");
+        final PasswordCredential secret = IntegrationTestSupport.createPasswordCredential(authId, "newPassword");
 
         registry.addCredentials(TENANT, deviceId, Collections.<CommonCredential> singleton(hashedPasswordCredential))
                 .compose(ar -> registry.updateCredentials(TENANT, deviceId, secret))

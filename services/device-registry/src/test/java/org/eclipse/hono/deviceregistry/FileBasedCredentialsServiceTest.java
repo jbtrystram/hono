@@ -28,6 +28,7 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import org.eclipse.hono.service.management.OperationResult;
 import org.eclipse.hono.service.credentials.AbstractCredentialsServiceTest;
@@ -464,14 +465,14 @@ public class FileBasedCredentialsServiceTest extends AbstractCredentialsServiceT
         // GIVEN a registry that has been configured to not allow modification of entries
         credentialsConfig.setModificationEnabled(false);
 
-        final CommonCredential secret = createPasswordCredential("myId", "bar");
+        final CommonCredential secret = createPasswordCredential("myId", "bar", OptionalInt.empty());
 
         // containing a set of credentials
         setCredentials(getCredentialsManagementService(), "tenant", "device", Collections.singletonList(secret))
                 .compose(ok -> {
                     final Future<OperationResult<Void>> result = Future.future();
                     // WHEN trying to update the credentials
-                    final PasswordCredential newSecret = createPasswordCredential("myId", "baz");
+                    final PasswordCredential newSecret = createPasswordCredential("myId", "baz", OptionalInt.empty());
                     svc.set("tenant", "device",
                             Optional.empty(),
                             Collections.singletonList(newSecret),

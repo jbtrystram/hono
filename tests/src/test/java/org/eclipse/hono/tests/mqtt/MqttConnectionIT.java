@@ -18,7 +18,6 @@ import java.util.UUID;
 
 import javax.security.auth.x500.X500Principal;
 
-import org.eclipse.hono.service.credentials.AbstractCredentialsServiceTest;
 import org.eclipse.hono.service.management.credentials.PasswordCredential;
 import org.eclipse.hono.service.management.credentials.X509CertificateCredential;
 import org.eclipse.hono.service.management.credentials.X509CertificateSecret;
@@ -280,7 +279,7 @@ public class MqttConnectionIT extends MqttTestBase {
                     return helper.registry.registerDevice(tenantId, deviceId);
                 })
                 .compose(ok -> {
-                    final PasswordCredential secret = AbstractCredentialsServiceTest.createPasswordCredential(deviceId,
+                    final PasswordCredential secret = IntegrationTestSupport.createPasswordCredential(deviceId,
                             password);
                     secret.setEnabled(false);
                     return helper.registry.addCredentials(tenantId, deviceId, Collections.singleton(secret));
@@ -316,7 +315,7 @@ public class MqttConnectionIT extends MqttTestBase {
                     return helper.registry.registerDevice(tenantId, deviceId, device);
                 })
                 .compose(ok -> {
-                    final PasswordCredential secret = AbstractCredentialsServiceTest.createPasswordCredential(deviceId,
+                    final PasswordCredential secret = IntegrationTestSupport.createPasswordCredential(deviceId,
                             password);
                     return helper.registry.addCredentials(tenantId, deviceId, Collections.singleton(secret));
                 })
