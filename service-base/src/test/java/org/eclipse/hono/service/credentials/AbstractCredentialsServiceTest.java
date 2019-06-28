@@ -205,7 +205,7 @@ public abstract class AbstractCredentialsServiceTest {
         final EncodedPassword encodedPwd = EncodedPassword.fromHonoSecret(encoder.encode(password));
 
         final PasswordSecret s = new PasswordSecret();
-        s.setHashFunction(CredentialsConstants.HASH_FUNCTION_BCRYPT);
+        s.setHashFunction(encodedPwd.hashFunction);
         if (encodedPwd.salt != null) {
             s.setSalt(Base64.getEncoder().encodeToString(encodedPwd.salt));
         }
