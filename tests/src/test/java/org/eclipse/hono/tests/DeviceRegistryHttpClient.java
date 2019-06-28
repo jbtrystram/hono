@@ -115,7 +115,6 @@ public final class DeviceRegistryHttpClient {
      *         successfully. Otherwise the future will fail with a {@link ServiceInvocationException}.
      */
     public Future<MultiMap> addTenant(final String tenantId, final JsonObject requestPayload) {
-        System.out.println("tenant " + requestPayload);
         return addTenant(tenantId, requestPayload, HttpURLConnection.HTTP_CREATED);
     }
 
