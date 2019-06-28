@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -417,23 +416,26 @@ public abstract class HttpTestBase {
 
         setup.await();
         final long start = System.currentTimeMillis();
-        final AtomicInteger messageCount = new AtomicInteger(0);
+        int messageCount = 0;
 
-        while (messageCount.get() < numberOfMessages) {
+        while (messageCount < numberOfMessages) {
+
+            final int currentMessage = messageCount;
+            messageCount++;
 
             final Async sending = ctx.async();
-            requestSender.apply(messageCount.getAndIncrement()).compose(this::assertHttpResponse).setHandler(attempt -> {
+            requestSender.apply(currentMessage).compose(this::assertHttpResponse).setHandler(attempt -> {
                 if (attempt.succeeded()) {
-                    logger.debug("sent message {}", messageCount.get());
+                    logger.debug("sent message {}", currentMessage);
                 } else {
-                    logger.info("failed to send message {}: {}", messageCount.get(), attempt.cause().getMessage());
+                    logger.info("failed to send message {}: {}", currentMessage, attempt.cause().getMessage());
                     ctx.fail(attempt.cause());
                 }
                 sending.complete();
             });
 
-            if (messageCount.get() % 20 == 0) {
-                logger.info("messages sent: " + messageCount.get());
+            if (currentMessage % 20 == 0) {
+                logger.info("messages sent: " + currentMessage);
             }
             sending.await();
         }
