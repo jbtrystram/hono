@@ -13,6 +13,8 @@
 
 package org.eclipse.hono.tests.http;
 
+import static org.eclipse.hono.tests.http.HttpProtocolException.assertProtocolError;
+
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -359,7 +361,7 @@ public abstract class HttpTestBase {
             final TestContext ctx,
             final String tenantId,
             final Function<Integer, Future<MultiMap>> requestSender) throws InterruptedException {
-        this.testUploadMessages(ctx, tenantId, null, requestSender);
+        testUploadMessages(ctx, tenantId, null, requestSender);
     }
 
     /**
@@ -377,7 +379,7 @@ public abstract class HttpTestBase {
             final String tenantId,
             final Consumer<Message> messageConsumer,
             final Function<Integer, Future<MultiMap>> requestSender) throws InterruptedException {
-        this.testUploadMessages(ctx, tenantId, messageConsumer, requestSender, MESSAGES_TO_SEND);
+        testUploadMessages(ctx, tenantId, messageConsumer, requestSender, MESSAGES_TO_SEND);
     }
 
     /**
@@ -498,9 +500,8 @@ public abstract class HttpTestBase {
     }
 
     /**
-     * Verifies that the HTTP adapter rejects messages from a device
-     * that belongs to a tenant for which the HTTP adapter has been disabled
-     * with a 403.
+     * Verifies that the HTTP adapter rejects messages from a device that belongs to a tenant for which the HTTP adapter
+     * has been disabled with a 403.
      *
      * @param ctx The test context
      */
@@ -511,30 +512,33 @@ public abstract class HttpTestBase {
         final Tenant tenant = new Tenant();
         Tenants.setAdapterEnabled(tenant, Constants.PROTOCOL_ADAPTER_TYPE_HTTP, false);
 
-        helper.registry.addDeviceForTenant(tenantId, tenant, deviceId, PWD).compose(ok -> {
+        helper.registry
+                .addDeviceForTenant(tenantId, tenant, deviceId, PWD)
+                .compose(ok -> {
 
-            // WHEN a device that belongs to the tenant uploads a message
-            final MultiMap requestHeaders = MultiMap.caseInsensitiveMultiMap()
-                    .add(HttpHeaders.CONTENT_TYPE, "text/plain")
-                    .add(HttpHeaders.AUTHORIZATION, authorization);
+                    // WHEN a device that belongs to the tenant uploads a message
+                    final MultiMap requestHeaders = MultiMap.caseInsensitiveMultiMap()
+                            .add(HttpHeaders.CONTENT_TYPE, "text/plain")
+                            .add(HttpHeaders.AUTHORIZATION, authorization);
 
-            return httpClient.create(
-                    getEndpointUri(),
-                    Buffer.buffer("hello"),
-                    requestHeaders,
-                    response -> response.statusCode() == HttpURLConnection.HTTP_ACCEPTED);
+                    return httpClient.create(
+                            getEndpointUri(),
+                            Buffer.buffer("hello"),
+                            requestHeaders,
+                            response -> response.statusCode() == HttpURLConnection.HTTP_ACCEPTED)
+                            .recover(HttpProtocolException::transformInto);
 
-        }).setHandler(ctx.asyncAssertFailure(t -> {
+                })
+                .setHandler(ctx.asyncAssertFailure(t -> {
 
-            // THEN the message gets rejected by the HTTP adapter with a 403
-            logger.info("could not publish message for disabled tenant [{}]", tenantId);
-            ctx.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, ((ServiceInvocationException) t).getErrorCode());
-        }));
+                    // THEN the message gets rejected by the HTTP adapter with a 403
+                    logger.info("could not publish message for disabled tenant [{}]", tenantId);
+                    assertProtocolError(HttpURLConnection.HTTP_FORBIDDEN, t);
+                }));
     }
 
     /**
-     * Verifies that the HTTP adapter rejects messages from a disabled device
-     * with a 404.
+     * Verifies that the HTTP adapter rejects messages from a disabled device with a 404.
      *
      * @param ctx The test context
      */
@@ -546,26 +550,30 @@ public abstract class HttpTestBase {
         final Device device = new Device();
         device.setEnabled(Boolean.FALSE);
 
-        helper.registry.addDeviceForTenant(tenantId, tenant, deviceId, device, PWD).compose(ok -> {
+        helper.registry
+                .addDeviceForTenant(tenantId, tenant, deviceId, device, PWD)
+                .compose(ok -> {
 
-            // WHEN the device tries to upload a message
-            final MultiMap requestHeaders = MultiMap.caseInsensitiveMultiMap()
-                    .add(HttpHeaders.CONTENT_TYPE, "text/plain")
-                    .add(HttpHeaders.AUTHORIZATION, authorization);
+                    // WHEN the device tries to upload a message
+                    final MultiMap requestHeaders = MultiMap.caseInsensitiveMultiMap()
+                            .add(HttpHeaders.CONTENT_TYPE, "text/plain")
+                            .add(HttpHeaders.AUTHORIZATION, authorization);
 
-            return httpClient.create(
-                    getEndpointUri(),
-                    Buffer.buffer("hello"),
-                    requestHeaders,
-                    response -> response.statusCode() == HttpURLConnection.HTTP_ACCEPTED);
+                    return httpClient.create(
+                            getEndpointUri(),
+                            Buffer.buffer("hello"),
+                            requestHeaders,
+                            response -> response.statusCode() == HttpURLConnection.HTTP_ACCEPTED)
+                            .recover(HttpProtocolException::transformInto);
 
-        }).setHandler(ctx.asyncAssertFailure(t -> {
+                })
+                .setHandler(ctx.asyncAssertFailure(t -> {
 
-            // THEN the message gets rejected by the HTTP adapter with a 404
-            logger.info("could not publish message for disabled device [tenant-id: {}, device-id: {}]",
-                    tenantId, deviceId);
-            ctx.assertEquals(HttpURLConnection.HTTP_NOT_FOUND, ((ServiceInvocationException) t).getErrorCode());
-        }));
+                    // THEN the message gets rejected by the HTTP adapter with a 404
+                    logger.info("could not publish message for disabled device [tenant-id: {}, device-id: {}]",
+                            tenantId, deviceId);
+                    assertProtocolError(HttpURLConnection.HTTP_NOT_FOUND, t);
+                }));
     }
 
     /**
@@ -585,7 +593,8 @@ public abstract class HttpTestBase {
         final Device device = new Device();
         device.setVia(Collections.singletonList(gatewayId));
 
-        helper.registry.addDeviceForTenant(tenantId, tenant, gatewayId, gateway, PWD)
+        helper.registry
+                .addDeviceForTenant(tenantId, tenant, gatewayId, gateway, PWD)
                 .compose(ok -> helper.registry.registerDevice(tenantId, deviceId, device))
                 .compose(ok -> {
 
@@ -598,20 +607,22 @@ public abstract class HttpTestBase {
                             String.format("%s/%s/%s", getEndpointUri(), tenantId, deviceId),
                             Buffer.buffer("hello"),
                             requestHeaders,
-                            statusCode -> statusCode == HttpURLConnection.HTTP_ACCEPTED);
+                            statusCode -> statusCode == HttpURLConnection.HTTP_ACCEPTED)
+                            .recover(HttpProtocolException::transformInto);
 
-                }).setHandler(ctx.asyncAssertFailure(t -> {
+                })
+                .setHandler(ctx.asyncAssertFailure(t -> {
 
                     // THEN the message gets rejected by the HTTP adapter with a 403
                     logger.info("could not publish message for disabled gateway [tenant-id: {}, gateway-id: {}]",
                             tenantId, gatewayId);
-                    ctx.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, ((ServiceInvocationException) t).getErrorCode());
+                    assertProtocolError(HttpURLConnection.HTTP_FORBIDDEN, t);
                 }));
     }
 
     /**
-     * Verifies that the HTTP adapter rejects messages from a gateway
-     * for an device that it is not authorized for with a 403.
+     * Verifies that the HTTP adapter rejects messages from a gateway for an device that it is not authorized for with a
+     * 403.
      *
      * @param ctx The test context
      */
@@ -624,28 +635,31 @@ public abstract class HttpTestBase {
         final Device deviceData = new Device();
         deviceData.setVia(Collections.singletonList("not-the-created-gateway"));
 
-        helper.registry.addDeviceForTenant(tenantId, tenant, gatewayId, PWD)
-        .compose(ok -> helper.registry.registerDevice(tenantId, deviceId, deviceData))
-        .compose(ok -> {
+        helper.registry
+                .addDeviceForTenant(tenantId, tenant, gatewayId, PWD)
+                .compose(ok -> helper.registry.registerDevice(tenantId, deviceId, deviceData))
+                .compose(ok -> {
 
-            // WHEN another gateway tries to upload a message for the device
-            final MultiMap requestHeaders = MultiMap.caseInsensitiveMultiMap()
-                    .add(HttpHeaders.CONTENT_TYPE, "text/plain")
-                    .add(HttpHeaders.AUTHORIZATION, getBasicAuth(tenantId, gatewayId, PWD));
+                    // WHEN another gateway tries to upload a message for the device
+                    final MultiMap requestHeaders = MultiMap.caseInsensitiveMultiMap()
+                            .add(HttpHeaders.CONTENT_TYPE, "text/plain")
+                            .add(HttpHeaders.AUTHORIZATION, getBasicAuth(tenantId, gatewayId, PWD));
 
-            return httpClient.update(
-                    String.format("%s/%s/%s", getEndpointUri(), tenantId, deviceId),
-                    Buffer.buffer("hello"),
-                    requestHeaders,
-                    statusCode -> statusCode == HttpURLConnection.HTTP_ACCEPTED);
+                    return httpClient.update(
+                            String.format("%s/%s/%s", getEndpointUri(), tenantId, deviceId),
+                            Buffer.buffer("hello"),
+                            requestHeaders,
+                            statusCode -> statusCode == HttpURLConnection.HTTP_ACCEPTED)
+                            .recover(HttpProtocolException::transformInto);
 
-        }).setHandler(ctx.asyncAssertFailure(t -> {
+                })
+                .setHandler(ctx.asyncAssertFailure(t -> {
 
-            // THEN the message gets rejected by the HTTP adapter with a 403
-            logger.info("could not publish message for unauthorized gateway [tenant-id: {}, gateway-id: {}]",
-                    tenantId, gatewayId);
-            ctx.assertEquals(HttpURLConnection.HTTP_FORBIDDEN, ((ServiceInvocationException) t).getErrorCode());
-        }));
+                    // THEN the message gets rejected by the HTTP adapter with a 403
+                    logger.info("could not publish message for unauthorized gateway [tenant-id: {}, gateway-id: {}]",
+                            tenantId, gatewayId);
+                    assertProtocolError(HttpURLConnection.HTTP_FORBIDDEN, t);
+                }));
     }
 
     /**
@@ -830,7 +844,8 @@ public abstract class HttpTestBase {
                 .add(HttpHeaders.ORIGIN, ORIGIN_URI)
                 .add(Constants.HEADER_COMMAND_RESPONSE_STATUS, "200");
 
-        helper.registry.addDeviceForTenant(tenantId, tenant, deviceId, PWD)
+        helper.registry
+                .addDeviceForTenant(tenantId, tenant, deviceId, PWD)
                 .setHandler(ctx.asyncAssertSuccess(ok -> setup.complete()));
         setup.await();
 
@@ -902,7 +917,8 @@ public abstract class HttpTestBase {
                 .add(HttpHeaders.ORIGIN, ORIGIN_URI)
                 .add(Constants.HEADER_TIME_TIL_DISCONNECT, "2");
 
-        helper.registry.addDeviceForTenant(tenantId, tenant, deviceId, PWD)
+        helper.registry
+                .addDeviceForTenant(tenantId, tenant, deviceId, PWD)
                 .setHandler(ctx.asyncAssertSuccess(ok -> setup.complete()));
         setup.await();
 
