@@ -389,8 +389,7 @@ public abstract class HttpTestBase {
      * @param messageConsumer Consumer that is invoked when a message was received.
      * @param requestSender The test device that will publish the data.
      * @param numberOfMessages The number of messages that are uploaded.
-     * @throws InterruptedException if the test is interrupted before it
-     *              has finished.
+     * @throws InterruptedException if the test is interrupted before it has finished.
      */
     protected void testUploadMessages(
             final TestContext ctx,
@@ -425,13 +424,16 @@ public abstract class HttpTestBase {
 
             final Async sending = ctx.async();
             requestSender.apply(currentMessage).compose(this::assertHttpResponse).setHandler(attempt -> {
-                if (attempt.succeeded()) {
-                    logger.debug("sent message {}", currentMessage);
-                } else {
-                    logger.info("failed to send message {}: {}", currentMessage, attempt.cause().getMessage());
-                    ctx.fail(attempt.cause());
+                try {
+                    if (attempt.succeeded()) {
+                        logger.debug("sent message {}", currentMessage);
+                    } else {
+                        logger.info("failed to send message {}: {}", currentMessage, attempt.cause().getMessage());
+                        ctx.fail(attempt.cause());
+                    }
+                } finally {
+                    sending.complete();
                 }
-                sending.complete();
             });
 
             if (currentMessage % 20 == 0) {
@@ -440,7 +442,8 @@ public abstract class HttpTestBase {
             sending.await();
         }
 
-        final long timeToWait = Math.max(TEST_TIMEOUT_MILLIS - 50 - (System.currentTimeMillis() - testStartTimeMillis), 1);
+        final long timeToWait = Math.max(TEST_TIMEOUT_MILLIS - 50 - (System.currentTimeMillis() - testStartTimeMillis),
+                1);
         if (!received.await(timeToWait, TimeUnit.MILLISECONDS)) {
             logger.info("sent {} and received {} messages after {} milliseconds",
                     messageCount, numberOfMessages - received.getCount(), System.currentTimeMillis() - start);
